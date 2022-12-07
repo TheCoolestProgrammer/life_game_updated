@@ -14,4 +14,4 @@ func drawing:<br />
 test_camera_draw() - сетка<br />
 screen.fill((0, 0, 0)) - цвет фона<br />
 <br />
-func draw_cells - 90 строка цвет клетки<br />
+func draw_cells - 53 строка цвет клетки<br />
