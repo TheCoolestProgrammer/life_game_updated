@@ -20,6 +20,11 @@ game_running=False
 frames=0
 frames_for_wait=1
 
+history_mode=True
+if history_mode:
+    points_history=[points]
+    now_way = 0
+    
 def coordinates_changer(x,y):
     # в координаты поля
     global camera_center_y, camera_center_x
@@ -46,13 +51,17 @@ def draw_cells():
     width2 = coordinates_chaneg_in_pygame(0, 0)[0]
     width = width1-width2
     height = width
-    for pos in points:
+    if history_mode:
+        x = points_history[now_way]
+    else:
+        x = points
+    for pos in x:
         x = coordinates_chaneg_in_pygame(pos[0]*5,0)[0]
         y = coordinates_chaneg_in_pygame(0,(pos[1]+1)*5)[1]
         if screen_width >x >0 and screen_height>y>0:
             pygame.draw.rect(screen, (255,255,255),(x,y,width,height))
 def events_check():
-    global process_running, scale, scale_value, camera_center_x,camera_center_y,game_running
+    global process_running, scale, scale_value, camera_center_x,camera_center_y,game_running,points_history,now_way
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             process_running = False
@@ -70,14 +79,30 @@ def events_check():
             elif event.key == pygame.K_q:
                 game_running= not game_running
                 frames=0
+                if history_mode:
+                    points_history = points_history[:now_way + 1]
+            if history_mode:
+                if event.key == pygame.K_z:
+                    if now_way-1 >=0:
+                        now_way-=1
+                elif event.key == pygame.K_x:
+                    if now_way+1 <len(points_history):
+                        now_way+=1
         elif event.type== pygame.MOUSEBUTTONDOWN:
             if event.button == 3:
                 pos = pygame.mouse.get_pos()
                 cell_pos = get_field_cell(pos[0],pos[1])
-                if cell_pos in points:
-                    points.remove(cell_pos)
+                if history_mode:
+                    if cell_pos in points:
+                        points_history[now_way].remove(cell_pos)
+                    else:
+                        points_history[now_way].append(cell_pos)
+                    points_history = points_history[:now_way + 1]
                 else:
-                    points.append(cell_pos)
+                    if cell_pos in points:
+                        points.remove(cell_pos)
+                    else:
+                        points.append(cell_pos)
     keys = pygame.mouse.get_pressed()
     keys2= pygame.key.get_pressed()
 
@@ -142,6 +167,12 @@ def drawing():
     screen.fill((0, 0, 0))
     draw_cells()
     test_camera_draw()
+    if history_mode:
+        font2 = pygame.font.SysFont("Times New Roman", 50)
+        text = str(now_way+1) + "/ " + str(len(points_history))
+        surface = font2.render(text, False, (255, 255, 255))
+        screen.blit(surface, (screen_width-len(text)*50,screen_height-60))
+    
     pygame.display.update()
 def game_way(points):
     new_points= []
@@ -184,7 +215,7 @@ def game_way(points):
     return new_points
 
 def mainloop():
-    global height_coof,rotate_angle,frames,frames_for_wait,points
+    global height_coof,rotate_angle,frames,frames_for_wait,points,points_hisory,now_way
     while process_running:
         events_check()
         drawing()
@@ -193,7 +224,12 @@ def mainloop():
             frames+=1
             if frames==frames_for_wait:
                 frames=0
-                points = game_way(points)
+                if history_mode:
+                    points = game_way(points_history[now_way])
+                    points_history.append(points)
+                    now_way = len(points_history) - 1
+                else:
+                    points = game_way(points)
 
         pygame.time.delay(20)
 
